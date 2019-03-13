@@ -1,0 +1,102 @@
+Send-Keys Dialect
+
+Send-keys is a dialect for sending keystrokes to other applications. It's strictly for Windows at this time. Someone else will have to write an engine for other OSs if they want it there.
+
+There is a global function (win-send-keys) that you can use to send keys. It takes, as a parameter, a block that contains the keystrokes you want to send, written in the send-keys dialect.
+
+
+There are two refinements for the WIN-SEND-KEYS function as well:
+
+    /to-window - allows you to send all the keystrokes to the same window. I.e. the engine will try to activate the specified window before sending each key. If you send keys that open a modal dialog, you probably don't want to do this. The window can be identified by either the title bar text (a string, which can include wildcards) or its window handle (an integer).
+
+    /delay - tells the engine to wait the specified amount of time between each keystroke it sends. The send-keys dialect also lets you define delays between specific keys you're sending.
+
+Something else you will probably want to use are functions in the win-shell module which allow you to launch programs, locate windows, activate them, etc. 
+
+
+
+What about stuff like: Ctrl+Shift+F12  "press <enter>"
+    
+keyboard dialect: the idea is that you see keyboard values listed in docs,
+so why not try to recognize them. It would be useful for lots of technical
+documentation, as well as design.
+
+send-keys dialect could also support this as a string form.
+
+
+
+===The dialect
+
+The types of keys you can send fall into three main categories:
+
+* Regular keys like numbers and letters
+
+* Special keys like ENTER, TAB, BACKSPACE, and ESCAPE.
+
+* Modifiers: SHIFT, CTRL, and ALT. 
+
+Aside from sending keystrokes, the other behaviors you can control with the dialect are:
+
+* Waiting for a specified amount of time before sending the next item.
+
+* Repeating an item a number of times.
+
+
+---Regular Keys
+
+Strings and characters are easy to send, and to see what is being sent.
+
+    win-send-keys ["Gregg"]
+
+    win-send-keys [#"I" #"r" #"w" #"i" #"n"]
+
+
+---Special Keys
+
+There are a number of special words that you can use to send special characters, though you don't always have to use them. Some keys don't have a string or character equivalent (e.g. function keys), so you have to use the special words. Some of the words in the list won't have any meaning to you. They just map to what virtual key codes Windows supports.
+
+    win-send-keys [return tab F5]
+
+Here's a list of all the special words you can use:
+
+    lbutton rbutton cancel mbutton back tab clear return shift control alt 
+    menu pause capital escape space prior next end home left up right down 
+    select print execute snapshot insert delete help lwin rwin apps numpad0 
+    numpad1 numpad2 numpad3 numpad4 numpad5 numpad6 numpad7 numpad8 numpad9 
+    multiply add separator subtract decimal divide f1 f2 f3 f4 f5 f6 f7 f8 
+    f9 f10 f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 numlock 
+    scroll lshift rshift lcontrol rcontrol lmenu rmenu processkey attn crsel 
+    exsel ereof play zoom noname pa1 oem-clear
+
+
+---Modifiers
+
+Modifiers are a little tricky because they don't have any meaning themselves. They generally only affect how other keys being sent are interpreted. For instance, to open a menu, you hold down the ALT key while pressing a letter.
+
+    win-send-keys [alt #"f"]
+
+ALT is a special case, because it is also stateful as far as menu activation is concerned.
+
+What's important about modifiers is when they are pressed and released relative to when other keys are sent. Modifiers are applied to the next item sent. An item is either a string, char, word, or block. Using a block allows you to group items so a modifier, or set of modifiers, is applied to all of them. Inside a block, you can release individual modifiers, leaving others applied. You do this with the SHIFT-UP, CTRL-UP, and ALT-UP words.
+
+    shift ["i" shift-up "rwin"] return	=	Irwin
+    shift "i" "rwin" return		=	Irwin
+    "Irwin" return			=	Irwin
+    shift "irwin" " irwin" return	=	IRWIN irwin
+    shift ["ir" "win"] return		=	IRWIN
+
+
+---Waiting
+
+If you want to wait before sending the next item, you can do so.
+
+    alt #"f" #"o" wait 0:0:0.1 alt "n" wait .5 escape
+
+
+---Repeating
+
+If you put an integer after an item, the item will be sent repeatedly. For example, to send ten zeros, you could do this:
+
+    "0" 10
+
+
