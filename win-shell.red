@@ -213,8 +213,6 @@ win-shell: context [
 				] 
 			]
 		]
-		minus-one: -1
-		pointer-to-minus-one: :minus-one
 		
 		get-window-title: func [
 			hWnd     [integer!] 
